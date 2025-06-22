@@ -60,13 +60,13 @@
     }
     .input-area input[type="text"] {
       flex: 1;
-      padding: 10px;
-      border-radius: 10px;
+      padding: 40px;
+      border-radius: 70px;
       border: none;
       font-size: 16px;
     }
     .input-area button, .input-area label, .input-area select {
-      padding: 10px 15px;
+      padding: 35px 40px;
       border: none;
       border-radius: 10px;
       background-color: #ff0000;
@@ -95,23 +95,25 @@
     <b>doakan Rizky agar sehat & berkah selalu.</b>
   </div>  <div class="input-area">
     <select id="menu">
-      <option value="">-- ⏤͟͟͞͞ℜℑℨ𝔐𝔒𝔇𝔈交𝔖𝔢𝔓𝔘ℌ🕊 pilih Fitur --</option>
-      <option value="poll">AI BY RIZKY</option>
+      <option value="">-- Pilih Fitur --</option>
+      <option value="poll">AI Pollinations</option>
       <option value="hd">Gambar HD</option>
       <option value="short">Shortlink URL</option>
       <option value="tiktok">Download TikTok</option>
-      <option value="tts">TEXT JADI SUARA</option>
+      <option value="spotify">Download Spotify</option>
+      <option value="tts">TTS Acak</option>
     </select>
-    <input type="text" id="prompt" placeholder="⏤͟͟͞͞ℜℑℨ𝔐𝔒𝔇𝔈交𝔖𝔢𝔓ℌ🕊.">
-    <button onclick="askAI()">Kirim</button>
-    <label for="imageUpload">GAMBAR</label>
-    <input type="file" id="imageUpload" accept="image/*" onchange="handleUpload(this)">
-    <button onclick="clearChat()"> Hapus chat</button>
-  </div><audio id="replySound" src="https://www.myinstants.com/media/sounds/discord-notification.mp3"></audio>
-
+    <input type="text" id="prompt" placeholder="Masukkan teks/link...">
+    <button onclick="askAI()">KIRIM</button>
+    <label for="imageUpload">UPLOAD</label>
+    <input type="file" id="imageUpload" accept="image/*" style="display:none" onchange="handleUpload(this)">
+    <button onclick="clearChat()">Hapus chat</button>
+  </div>
+  <audio id="replySound" src="https://www.myinstants.com/media/sounds/discord-notification.mp3"></audio>
   <script>
     const chat = document.getElementById("chat");
     const sound = document.getElementById("replySound");
+    const models = ['miku','nahida','nami','ana','optimus_prime','goku','taylor_swift','elon_musk','mickey_mouse','kendrick_lamar','angela_adkinsh','eminem'];
     function playSound() { sound.currentTime = 0; sound.play(); }
     function saveChat() { localStorage.setItem("chat", chat.innerHTML); }
     function loadChat() { chat.innerHTML = localStorage.getItem("chat") || ""; }
@@ -119,75 +121,81 @@
     function handleUpload(input) {
       const file = input.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = function (e) {
-        chat.innerHTML += `<div class="message bot"><img src="${e.target.result}" alt="Upload"></div>`;
+      reader.onload = e => {
+        chat.innerHTML += `<div class="message bot"><img src="${e.target.result}" /></div>`;
         playSound(); saveChat(); chat.scrollTop = chat.scrollHeight;
       };
       reader.readAsDataURL(file);
     }
-
     async function askAI() {
-      const promptInput = document.getElementById("prompt");
+      const prompt = document.getElementById("prompt").value.trim();
       const menu = document.getElementById("menu").value;
-      const text = promptInput.value.trim();
-      if (!menu || !text) return;
-      chat.innerHTML += `<div class="message user">${text}</div>`;
-      promptInput.value = '';
-      chat.scrollTop = chat.scrollHeight; saveChat();
-      const loading = document.createElement("div");
-      loading.className = "message bot"; loading.textContent = "⏤͟͟͞͞ℜℑℨ𝔐𝔒𝔇𝔈交𝔖𝔢𝔓𝔘ℌ🕊...";
-      chat.appendChild(loading); chat.scrollTop = chat.scrollHeight;
+      if (!prompt || !menu) return;
+      chat.innerHTML += `<div class="message user">${prompt}</div>`;
+      document.getElementById("prompt").value = '';
+      const loader = document.createElement("div"); loader.className = "message bot"; loader.textContent = "Mengetik...";
+      chat.appendChild(loader); chat.scrollTop = chat.scrollHeight;
       try {
-        loading.remove();
-        if (menu === 'hd') {
-          chat.innerHTML += `<div class="message bot"><img src="https://image.pollinations.ai/prompt/${encodeURIComponent(text)} high resolution" alt="HD"></div>`;
-        } else if (menu === 'poll') {
+        loader.remove();
+        if (menu === 'poll') {
           const res = await fetch('https://text.pollinations.ai/openai', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: 'user', content: text }], stream: false }) });
+            body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], stream: false }) });
           const json = await res.json();
-          chat.innerHTML += `<div class="message bot">${json?.choices?.[0]?.message?.content || 'Tidak ada jawaban.'}</div>`;
+          chat.innerHTML += `<div class="message bot">${json?.choices?.[0]?.message?.content || 'Tidak ada respon.'}</div>`;
+        } else if (menu === 'hd') {
+          chat.innerHTML += `<div class="message bot"><img src="https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)} high resolution" alt="Gambar"></div>`;
         } else if (menu === 'short') {
-          const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(text)}`);
-          const shortUrl = await res.text();
-          chat.innerHTML += `<div class="message bot">🔗 Short URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a></div>`;
+          const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(prompt)}`);
+          const short = await res.text();
+          chat.innerHTML += `<div class="message bot">🔗 Shortlink: <a href="${short}" target="_blank">${short}</a></div>`;
         } else if (menu === 'tiktok') {
-          const res = await fetch(`https://www.laurine.site/api/downloader/tiktok?url=${encodeURIComponent(text)}`);
+          const res = await fetch(`https://www.laurine.site/api/downloader/tiktok?url=${encodeURIComponent(prompt)}`);
           const json = await res.json();
           const video = json?.data?.no_watermark;
-          chat.innerHTML += `<div class="message bot">⏤͟͟͞͞ℜℑℨ𝔐𝔒𝔇𝔈交𝔖𝔢𝔓𝔘ℌ🕊 <video src="${video}" controls></video></div>`;
+          chat.innerHTML += `<div class="message bot"><video controls src="${video}"></video></div>`;
+        } else if (menu === 'spotify') {
+          const res = await fetch(`https://api.nekorinn.my.id/downloader/spotifyplay?q=${encodeURIComponent(prompt)}`);
+          const data = await res.json();
+          if (!data.result?.downloadUrl) throw new Error('Lagu tidak ditemukan.');
+          chat.innerHTML += `<div class="message bot">
+            🎵 Judul: ${data.result.metadata.title}<br>
+            🎤 Artis: ${data.result.metadata.artist}<br>
+            ⏱ Durasi: ${data.result.metadata.duration}<br>
+            <audio controls src="${data.result.downloadUrl}"></audio>
+            <a href="${data.result.downloadUrl}" download>⬇️ Download Lagu</a>
+          </div>`;
         } else if (menu === 'tts') {
-          const models = [
-            "67aee909-5d4b-11ee-a861-00163e2ac61b",
-            "67ae0979-5d4b-11ee-a861-00163e2ac61b",
-            "67ad95a0-5d4b-11ee-a861-00163e2ac61b",
-            "f2ec72cc-110c-11ef-811c-00163e0255ec",
-            "67ae0f40-5d4b-11ee-a861-00163e2ac61b"
-          ];
-          const voice_id = models[Math.floor(Math.random() * models.length)];
-          const payload = {
-            raw_text: text,
-            url: "https://filme.imyfone.com/text-to-speech/anime-text-to-speech/",
-            product_id: "200054",
-            convert_data: [{
-              voice_id, speed: "1", volume: "50", text, pos: 0
-            }]
-          };
-          const res = await fetch("https://voxbox-tts-api.imyfone.com/pc/v1/voice/tts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+          const model = models[Math.floor(Math.random()*models.length)];
+          const ttsRes = await fetch('https://voxbox-tts-api.imyfone.com/pc/v1/voice/tts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Forwarded-For': Array(4).fill().map(() => Math.floor(Math.random()*255)).join('.'),
+              'User-Agent': 'Mozilla/5.0'
+            },
+            body: JSON.stringify({
+              raw_text: prompt,
+              url: "https://filme.imyfone.com/text-to-speech/anime-text-to-speech/",
+              product_id: "200054",
+              convert_data: [{ voice_id: model, speed: "1", volume: "50", text: prompt, pos: 0 }]
+            })
           });
-          const json = await res.json();
-          const audio = json?.data?.convert_result?.[0]?.oss_url;
-          chat.innerHTML += `<div class="message bot">⏤͟͟͞͞ℜℑℨ𝔐𝔒𝔇𝔈交𝔖𝔢𝔓𝔘ℌ🕊 <audio controls src="${audio}"></audio></div>`;
+          const ttsJson = await ttsRes.json();
+          const audio = ttsJson?.data?.convert_result?.[0]?.oss_url;
+          chat.innerHTML += `<div class="message bot">
+            🔊 TTS Suara Acak: ${model}<br>
+            <audio controls src="${audio}"></audio>
+            <a href="${audio}" download>⬇️ Download Suara</a>
+          </div>`;
         }
         playSound(); saveChat(); chat.scrollTop = chat.scrollHeight;
       } catch (e) {
-        loading.remove();
+        loader.remove();
         chat.innerHTML += `<div class="message bot">❌ Error: ${e.message}</div>`;
       }
     }
     loadChat();
-  </script></body>
-</html>
+  </script>
+</body>
+      </html>
